@@ -1,24 +1,7 @@
 #include "injector.h"
 #include <winternl.h>
-#include <Psapi.h>
-#include <cstring>
 
-typedef NTSTATUS(NTAPI* NtAllocateVirtualMemory_t)(
-    HANDLE ProcessHandle,
-    PVOID* BaseAddress,
-    ULONG_PTR ZeroBits,
-    PSIZE_T RegionSize,
-    ULONG AllocationType,
-    ULONG Protect
-);
-
-typedef NTSTATUS(NTAPI* NtWriteVirtualMemory_t)(
-    HANDLE ProcessHandle,
-    PVOID BaseAddress,
-    PVOID Buffer,
-    SIZE_T NumberOfBytesToWrite,
-    PSIZE_T NumberOfBytesWritten
-);
+#define THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER 0x00000004
 
 typedef NTSTATUS(NTAPI* NtCreateThreadEx_t)(
     PHANDLE ThreadHandle,
@@ -61,24 +44,6 @@ HANDLE Injector::GetRobloxProcess() {
     return process;
 }
 
-DWORD Injector::FindProcessByName(const std::wstring& name) {
-    DWORD pid = 0;
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (snapshot == INVALID_HANDLE_VALUE) return 0;
-
-    PROCESSENTRY32W pe = { sizeof(pe) };
-    if (Process32FirstW(snapshot, &pe)) {
-        do {
-            if (_wcsicmp(pe.szExeFile, name.c_str()) == 0) {
-                pid = pe.th32ProcessID;
-                break;
-            }
-        } while (Process32NextW(snapshot, &pe));
-    }
-    CloseHandle(snapshot);
-    return pid;
-}
-
 bool Injector::InjectDLL(HANDLE process, HMODULE module) {
     char path[MAX_PATH];
     if (GetModuleFileNameA(module, path, MAX_PATH) == 0)
@@ -99,12 +64,7 @@ bool Injector::LoadLibraryInject(HANDLE process, const std::string& dllPath) {
                                         MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!remotePath) return false;
 
-    SIZE_T written;
-    NtWriteVirtualMemory_t NtWriteVirtualMemory = (NtWriteVirtualMemory_t)
-        GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWriteVirtualMemory");
-
-    if (NtWriteVirtualMemory(process, remotePath, (PVOID)dllPath.c_str(),
-                              pathLen, &written) != 0) {
+    if (!WriteProcessMemory(process, remotePath, dllPath.c_str(), pathLen, nullptr)) {
         VirtualFreeEx(process, remotePath, 0, MEM_RELEASE);
         return false;
     }

@@ -17,17 +17,12 @@ extern "C" {
         return TRUE;
     }
 
-    // Export functions that can be called from the host process
     __declspec(dllexport) void ExecuteLuaScript(const char* script) {
         Executor::GetInstance()->ExecuteScript(script);
     }
 
     __declspec(dllexport) bool IsExecutorReady() {
         return Executor::GetInstance() && Executor::GetInstance()->IsInjected();
-    }
-
-    __declspec(dllexport) void SetESPDistance(float distance) {
-        // Apply ESP distance
     }
 
     __declspec(dllexport) void ToggleUI() {

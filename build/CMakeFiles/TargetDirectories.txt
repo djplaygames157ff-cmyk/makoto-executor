@@ -1,0 +1,3 @@
+C:/Users/Administrator/roblox-executor/build/CMakeFiles/MakotoExecutor.dir
+C:/Users/Administrator/roblox-executor/build/CMakeFiles/edit_cache.dir
+C:/Users/Administrator/roblox-executor/build/CMakeFiles/rebuild_cache.dir

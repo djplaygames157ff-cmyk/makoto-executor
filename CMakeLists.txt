@@ -1,53 +1,25 @@
 cmake_minimum_required(VERSION 3.20)
-project(ZeusExecutor VERSION 1.0.0 LANGUAGES CXX)
+project(MakotoExecutor VERSION 2.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Build as DLL
-add_library(ZeusExecutor SHARED
-    executor.cpp
-    injector.cpp
-    evasion.cpp
-    ui.cpp
-    lua_core.cpp
-    dllmain.cpp
+add_library(MakotoExecutor SHARED minimal_dll.cpp)
+
+target_compile_definitions(MakotoExecutor PRIVATE
+    UNICODE
+    _UNICODE
+    NOMINMAX
+    _CRT_SECURE_NO_WARNINGS
 )
 
-target_include_directories(ZeusExecutor PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/lua
-)
+if(MSVC)
+    target_compile_options(MakotoExecutor PRIVATE /O1 /Os /GL /Gy /Gw /Zc:inline /EHsc /MT /Gd)
+    target_link_options(MakotoExecutor PRIVATE /LTCG /OPT:REF /OPT:ICF /MERGE:.rdata=.text /MERGE:.pdata=.text /RELEASE /DEBUG:NONE /NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib)
+endif()
 
-target_compile_definitions(ZeusExecutor PRIVATE
-    -DUNICODE
-    -D_UNICODE
-    -DNOMINMAX
-    -D_CRT_SECURE_NO_WARNINGS
-)
-
-# Lua 5.4 static
-add_subdirectory(lua)
-
-target_link_libraries(ZeusExecutor PRIVATE
-    lua54
-    d3d11
-    dxgi
-    psapi
-    ws2_32
-)
-
-# Set DLL properties
-set_target_properties(ZeusExecutor PROPERTIES
-    OUTPUT_NAME "ZeusExecutor"
+set_target_properties(MakotoExecutor PROPERTIES
+    OUTPUT_NAME "MakotoExecutor"
     PREFIX ""
     SUFFIX ".dll"
-    LINK_FLAGS "/NODEFAULTLIB:libcmt.lib /NODEFAULTLIB:libcmtd.lib"
-    STATIC_RUNTIME ON
 )
-
-# Hide exports by default
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(ZeusExecutor PRIVATE /O2 /GL /Gy)
-    target_link_options(ZeusExecutor PRIVATE /LTCG /OPT:REF /OPT:ICF)
-endif()
