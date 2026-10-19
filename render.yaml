@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: makoto-executor
+    runtime: python
+    plan: free
+    buildCommand: pip install flask
+    startCommand: gunicorn modal_server:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+    healthCheckPath: /api/status
